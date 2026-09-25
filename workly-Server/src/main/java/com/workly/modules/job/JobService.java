@@ -139,6 +139,10 @@ public class JobService {
     }
 
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "availableJobs", allEntries = true),
+        @CacheEvict(value = "seekerJobs",    allEntries = true)
+    })
     public Job updateJob(String jobId, Job jobDetails, String requestingUserMobile) {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> WorklyException.notFound("Job not found"));
@@ -306,6 +310,10 @@ public class JobService {
     }
 
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "availableJobs", allEntries = true),
+        @CacheEvict(value = "seekerJobs",    allEntries = true)
+    })
     public void acceptJob(String jobId, String workerMobile) {
         Job job = jobAcceptanceService.acceptJob(jobId, workerMobile);
 

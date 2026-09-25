@@ -43,10 +43,11 @@ public class MatchingService {
         // ── Cold path: MongoDB $near ──────────────────────────────────────────
         log.debug("MatchingService: Redis Geo miss — falling back to MongoDB");
         double maxDistanceMeters = radiusKm * 1000;
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 50);
         List<WorkerProfile> mongoResults = (scheduledTimeMillis != null && scheduledTimeMillis > 0)
                 ? workerRepository.findMatchingWorkersAvailableAt(requiredSkills, longitude, latitude,
-                        maxDistanceMeters, scheduledTimeMillis)
-                : workerRepository.findMatchingWorkers(requiredSkills, longitude, latitude, maxDistanceMeters);
+                        maxDistanceMeters, scheduledTimeMillis, pageable)
+                : workerRepository.findMatchingWorkers(requiredSkills, longitude, latitude, maxDistanceMeters, pageable);
 
         log.debug("MatchingService: MongoDB found {} workers", mongoResults.size());
         if (!mongoResults.isEmpty()) {
@@ -57,7 +58,7 @@ public class MatchingService {
         // Triggered when workers have no lastLocation stored yet (e.g. first login,
         // location push still pending the batch flush, or GPS unavailable).
         log.warn("MatchingService: No geo matches for skills={} — falling back to skill-only query", requiredSkills);
-        List<WorkerProfile> skillOnlyResults = workerRepository.findAvailableWorkersBySkills(requiredSkills);
+        List<WorkerProfile> skillOnlyResults = workerRepository.findAvailableWorkersBySkills(requiredSkills, pageable);
         return sortByTier(skillOnlyResults);
     }
 
@@ -66,7 +67,8 @@ public class MatchingService {
         try {
             GeoResults<RedisGeoCommands.GeoLocation<String>> geoResults = redisTemplate.opsForGeo()
                     .radius(GEO_KEY, new Circle(new Point(longitude, latitude),
-                            new Distance(radiusKm, Metrics.KILOMETERS)));
+                            new Distance(radiusKm, Metrics.KILOMETERS)),
+                            RedisGeoCommands.GeoRadiusCommandArgs.newGeoRadiusArgs().limit(50));
 
             if (geoResults == null || geoResults.getContent().isEmpty()) return List.of();
 

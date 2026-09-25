@@ -53,13 +53,13 @@ spring:
         - id: tracking-service
           uri: ${TRACKING_SERVICE_URL:http://localhost:8087}
           predicates:
-            - Path=/api/v1/location/**
+            - Path=/api/v1/location/**,/ws/tracking/**
 
         # Main Server (fallback - all other routes)
         - id: server-fallback
           uri: ${SERVER_URL:http://localhost:8080}
           predicates:
-            - Path=/api/v1/**,/ws/tracking/**,/health
+            - Path=/api/v1/**,/health
 
       default-filters:
         - name: Retry

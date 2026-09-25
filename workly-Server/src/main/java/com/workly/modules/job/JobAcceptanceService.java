@@ -23,8 +23,9 @@ public class JobAcceptanceService {
     public Job acceptJob(String jobId, String workerMobileNumber) {
         log.debug("JobAcceptanceService: [ENTER] acceptJob - jobId: {}, worker: {}", jobId, workerMobileNumber);
         String lockKey = JOB_LOCK_PREFIX + jobId;
+        String lockValue = java.util.UUID.randomUUID().toString();
 
-        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "locked", Duration.ofSeconds(10));
+        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, lockValue, Duration.ofSeconds(10));
         log.debug("JobAcceptanceService: Redis distributed lock acquired: {}", acquired);
 
         if (Boolean.FALSE.equals(acquired)) {
@@ -65,7 +66,8 @@ public class JobAcceptanceService {
             log.debug("JobAcceptanceService: [EXIT] acceptJob - Job {} assigned to worker {}", jobId, workerMobileNumber);
             return saved;
         } finally {
-            redisTemplate.delete(lockKey);
+            String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+            redisTemplate.execute(new org.springframework.data.redis.core.script.DefaultRedisScript<>(script, Long.class), java.util.Collections.singletonList(lockKey), lockValue);
             log.debug("JobAcceptanceService: Redis lock released for key: {}", lockKey);
         }
     }

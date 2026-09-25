@@ -30,7 +30,8 @@ public class OutboxRelayScheduler {
 
     @Scheduled(fixedDelay = 5000)
     public void relayEvents() {
-        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(LOCK_KEY, "locked", LOCK_TTL);
+        String lockValue = java.util.UUID.randomUUID().toString();
+        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(LOCK_KEY, lockValue, LOCK_TTL);
         if (!Boolean.TRUE.equals(acquired)) {
             return; // Another instance is already processing
         }
@@ -63,7 +64,8 @@ public class OutboxRelayScheduler {
                 }
             }
         } finally {
-            redisTemplate.delete(LOCK_KEY);
+            String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+            redisTemplate.execute(new org.springframework.data.redis.core.script.DefaultRedisScript<>(script, Long.class), java.util.Collections.singletonList(LOCK_KEY), lockValue);
         }
     }
 }
