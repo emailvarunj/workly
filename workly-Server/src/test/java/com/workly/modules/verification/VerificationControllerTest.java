@@ -45,7 +45,7 @@ class VerificationControllerTest {
         request.setJobId("job123");
         request.setOtp("1234");
 
-        when(verificationService.verifyAndCompleteJob(anyString(), anyString())).thenReturn(new JobCompletion());
+        when(verificationService.verifyAndCompleteJob(anyString(), anyString(), anyString())).thenReturn(new JobCompletion());
 
         mockMvc.perform(post("/api/v1/verification/complete")
                 .contentType(MediaType.APPLICATION_JSON)

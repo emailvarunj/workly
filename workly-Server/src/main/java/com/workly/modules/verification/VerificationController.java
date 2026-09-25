@@ -4,6 +4,8 @@ import com.workly.core.ApiResponse;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,7 +19,9 @@ public class VerificationController {
     @PostMapping("/complete")
     public ApiResponse<JobCompletion> completeJob(@RequestBody VerificationRequest request) {
         log.debug("VerificationController: [ENTER] completeJob - jobId: {}", request.getJobId());
-        JobCompletion result = verificationService.verifyAndCompleteJob(request.getJobId(), request.getOtp());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String mobileNumber = auth.getName();
+        JobCompletion result = verificationService.verifyAndCompleteJob(request.getJobId(), request.getOtp(), mobileNumber);
         log.debug("VerificationController: [EXIT] completeJob - jobId: {} verified and completed", request.getJobId());
         return ApiResponse.success(result, "Job verified and completed");
     }

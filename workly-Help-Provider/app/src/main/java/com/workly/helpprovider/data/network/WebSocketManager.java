@@ -3,6 +3,7 @@ import java.util.concurrent.TimeUnit;
 
 import android.util.Log;
 import com.google.gson.Gson;
+import com.workly.helpprovider.data.auth.AuthManager;
 import com.workly.helpprovider.data.model.ChatMessage;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -23,24 +24,30 @@ public class WebSocketManager {
     private final Gson gson;
     private volatile MessageListener messageListener;
     private final AppLogger appLogger;
+    private final AuthManager authManager;
 
     public interface MessageListener {
         void onMessageReceived(ChatMessage message);
     }
 
     @Inject
-    public WebSocketManager(Properties properties, AppLogger appLogger) {
+    public WebSocketManager(Properties properties, AppLogger appLogger, AuthManager authManager) {
         this.wsUrl = properties.getProperty("chat.url", "ws://192.168.31.112:8082/ws/chat");
         this.appLogger = appLogger;
+        this.authManager = authManager;
         client = new OkHttpClient.Builder().readTimeout(0, TimeUnit.MILLISECONDS).build();
         gson = new Gson();
     }
 
     public void connect(String userId, MessageListener listener) {
         this.messageListener = listener;
+        if (webSocket != null) {
+            webSocket.close(1000, "reconnect");
+        }
         appLogger.d("WORKLY_DEBUG", "WebSocketManager: [ENTER] connect - userId present, url: " + wsUrl);
         HttpUrl url = HttpUrl.parse(wsUrl).newBuilder()
                 .addQueryParameter("userId", userId)
+                .addQueryParameter("token", authManager.getToken())
                 .build();
         Request request = new Request.Builder().url(url).build();
         webSocket = client.newWebSocket(request, new WebSocketListener() {

@@ -44,8 +44,22 @@ public class LocationService {
      */
     @Scheduled(fixedDelay = 60_000)
     public void flushLocationsToMongo() {
-        Set<String> dirtyWorkers = redisTemplate.opsForSet().members(DIRTY_SET_KEY);
-        if (dirtyWorkers == null || dirtyWorkers.isEmpty()) return;
+        // Atomically hand off the dirty set to a private key before processing it, so a
+        // SADD landing between "read members" and "delete" (previously: SMEMBERS then
+        // unconditional DEL) lands on a fresh DIRTY_SET_KEY instead of being dropped.
+        String flushingKey = DIRTY_SET_KEY + ":flushing:" + System.currentTimeMillis();
+        try {
+            redisTemplate.rename(DIRTY_SET_KEY, flushingKey);
+        } catch (Exception e) {
+            // DIRTY_SET_KEY doesn't exist — nothing dirty since the last flush.
+            return;
+        }
+
+        Set<String> dirtyWorkers = redisTemplate.opsForSet().members(flushingKey);
+        if (dirtyWorkers == null || dirtyWorkers.isEmpty()) {
+            redisTemplate.delete(flushingKey);
+            return;
+        }
 
         log.debug("LocationService: Flushing {} dirty locations to MongoDB", dirtyWorkers.size());
 
@@ -79,7 +93,7 @@ public class LocationService {
             workerProfileRepository.saveAll(toSave);
         }
 
-        redisTemplate.delete(DIRTY_SET_KEY);
+        redisTemplate.delete(flushingKey);
         log.info("LocationService: Flushed {}/{} locations to MongoDB", flushed, dirtyWorkers.size());
     }
 }

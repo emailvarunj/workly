@@ -27,7 +27,24 @@ public class ProfileService {
         if (profile.getSkills() != null && !profile.getSkills().isEmpty()) {
             profile.setSkills(searchServiceClient.normalizeSkills(profile.getSkills()));
         }
-        return workerRepository.save(profile);
+
+        // Merge only client-mutable fields onto the existing record (looked up by the
+        // authenticated mobileNumber, never the client-supplied id). Trust/verification
+        // fields — id, tier, kycVerified, averageRating, totalReviews, idDocumentUrl — are
+        // never taken from the request body, or a caller could self-grant them.
+        WorkerProfile existing = workerRepository.findByMobileNumber(profile.getMobileNumber())
+                .stream().findFirst().orElseGet(WorkerProfile::new);
+        existing.setMobileNumber(profile.getMobileNumber());
+        existing.setName(profile.getName());
+        existing.setBio(profile.getBio());
+        existing.setSkills(profile.getSkills());
+        existing.setHourlyRate(profile.getHourlyRate());
+        existing.setAvailable(profile.isAvailable());
+        existing.setTravelRadiusKm(profile.getTravelRadiusKm());
+        existing.setLastLocation(profile.getLastLocation());
+        existing.setUnavailableSlots(profile.getUnavailableSlots());
+
+        return workerRepository.save(existing);
     }
 
     public SkillSeekerProfile createOrUpdateSeekerProfile(SkillSeekerProfile profile) {

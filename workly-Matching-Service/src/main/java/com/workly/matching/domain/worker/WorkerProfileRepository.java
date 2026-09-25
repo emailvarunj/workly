@@ -16,4 +16,8 @@ public interface WorkerProfileRepository extends MongoRepository<WorkerProfile, 
     @Query("{ 'available': true, 'skills': { $in: ?0 }, 'lastLocation': { $near: { $geometry: { type: 'Point', coordinates: [?1, ?2] }, $maxDistance: ?3 } }, 'unavailableSlots': { $not: { $elemMatch: { startTime: { $lte: ?4 }, endTime: { $gte: ?4 } } } } }")
     List<WorkerProfile> findMatchingWorkersAvailableAt(List<String> requiredSkills, double longitude, double latitude,
             double maxDistance, long targetTimeMillis);
+
+    /** Fallback: return all available workers with matching skills, ignoring location. */
+    @Query("{ 'available': true, 'skills': { $in: ?0 } }")
+    List<WorkerProfile> findAvailableWorkersBySkills(List<String> requiredSkills);
 }

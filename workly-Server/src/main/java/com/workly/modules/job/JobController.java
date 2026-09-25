@@ -188,6 +188,11 @@ public class JobController {
     }
 
     private com.workly.modules.job.dto.JobDTO toDto(Job job) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return toDto(job, auth != null ? auth.getName() : null);
+    }
+
+    private com.workly.modules.job.dto.JobDTO toDto(Job job, String requesterMobileNumber) {
         com.workly.modules.job.dto.JobDTO dto = new com.workly.modules.job.dto.JobDTO();
         dto.setId(job.getId());
         dto.setTitle(job.getTitle());
@@ -213,7 +218,11 @@ public class JobController {
 
         // Identity fields
         dto.setSeekerMobileNumber(job.getSeekerMobileNumber());
-        dto.setCompletionOtp(job.getCompletionOtp());
+        // Completion OTP is handed to the seeker in person to give to the worker — never expose
+        // it to the worker via the API, or the OTP verification step is pointless.
+        if (job.getSeekerMobileNumber() != null && job.getSeekerMobileNumber().equals(requesterMobileNumber)) {
+            dto.setCompletionOtp(job.getCompletionOtp());
+        }
         dto.setWorkerId(job.getWorkerMobileNumber());
 
         // Seeker name — fetch from seeker profile

@@ -13,7 +13,7 @@ public class PaymentEventConsumer {
 
     private final PaymentService paymentService;
 
-    @KafkaListener(topics = "job.created", groupId = "payment-group")
+    @KafkaListener(topics = "job.status.updated", groupId = "payment-group")
     public void handleJobEvents(JobEvent event) {
         log.debug("PaymentEventConsumer: [ENTER] - Consumed Job event: {}", event.getEventType());
         if ("JOB_COMPLETED".equals(event.getEventType())) {

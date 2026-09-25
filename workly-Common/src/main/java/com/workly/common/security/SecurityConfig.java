@@ -32,9 +32,11 @@ public class SecurityConfig {
                 http
                                 .csrf(AbstractHttpConfigurer::disable)
                                 .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers("/api/v1/configs/**", "/api/v1/reports/**")
+                                                .hasRole("ADMIN")
                                                 .requestMatchers("/api/v1/auth/**", "/health", "/api/v1/analytics/**", "/api/v1/admin/auth/login",
-                                                                "/api/v1/config/public", "/api/v1/config/features", "/api/v1/skills/**", "/api/v1/configs/**", "/api/v1/reports/**", 
-                                                                "/api/v1/pricing/**", "/ws/tracking/**", "/api/v1/normalization/**")
+                                                                "/api/v1/config/public", "/api/v1/config/features", "/api/v1/skills/**",
+                                                                "/api/v1/pricing/**", "/ws/tracking/**", "/ws/chat/**", "/api/v1/normalization/**")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(session -> session

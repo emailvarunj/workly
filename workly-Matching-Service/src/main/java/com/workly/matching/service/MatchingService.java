@@ -49,7 +49,16 @@ public class MatchingService {
                 : workerRepository.findMatchingWorkers(requiredSkills, longitude, latitude, maxDistanceMeters);
 
         log.debug("MatchingService: MongoDB found {} workers", mongoResults.size());
-        return sortByTier(mongoResults);
+        if (!mongoResults.isEmpty()) {
+            return sortByTier(mongoResults);
+        }
+
+        // ── Last-resort path: skill-only (no geo) ────────────────────────────
+        // Triggered when workers have no lastLocation stored yet (e.g. first login,
+        // location push still pending the batch flush, or GPS unavailable).
+        log.warn("MatchingService: No geo matches for skills={} — falling back to skill-only query", requiredSkills);
+        List<WorkerProfile> skillOnlyResults = workerRepository.findAvailableWorkersBySkills(requiredSkills);
+        return sortByTier(skillOnlyResults);
     }
 
     private List<WorkerProfile> findMatchesFromRedis(List<String> requiredSkills, double longitude, double latitude,

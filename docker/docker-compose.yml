@@ -293,6 +293,7 @@ services:
       context: ..
       dockerfile: Dockerfile
     environment:
+      - AUTH_TOKEN_SECRET=${AUTH_TOKEN_SECRET:?AUTH_TOKEN_SECRET must be set — see .env.example}
       - SPRING_DATA_MONGODB_URI=mongodb://mongo1:27017,mongo2:27018,mongo3:27019/workly?replicaSet=rs0
       - SPRING_DATA_REDIS_SENTINEL_MASTER=mymaster
       - SPRING_DATA_REDIS_SENTINEL_NODES=redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379
@@ -317,6 +318,7 @@ services:
       context: ..
       dockerfile: workly-Notification-Service/Dockerfile
     environment:
+      - AUTH_TOKEN_SECRET=${AUTH_TOKEN_SECRET:?AUTH_TOKEN_SECRET must be set — see .env.example}
       - SPRING_DATA_MONGODB_URI=mongodb://mongo1:27017,mongo2:27018,mongo3:27019/workly?replicaSet=rs0
       - SPRING_DATA_REDIS_SENTINEL_MASTER=mymaster
       - SPRING_DATA_REDIS_SENTINEL_NODES=redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379
@@ -335,6 +337,7 @@ services:
       context: ..
       dockerfile: workly-Tracking-Service/Dockerfile
     environment:
+      - AUTH_TOKEN_SECRET=${AUTH_TOKEN_SECRET:?AUTH_TOKEN_SECRET must be set — see .env.example}
       - SPRING_DATA_MONGODB_URI=mongodb://mongo1:27017,mongo2:27018,mongo3:27019/workly?replicaSet=rs0
       - SPRING_DATA_REDIS_SENTINEL_MASTER=mymaster
       - SPRING_DATA_REDIS_SENTINEL_NODES=redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379
@@ -351,6 +354,7 @@ services:
       context: ..
       dockerfile: workly-Profile-Service/Dockerfile
     environment:
+      - AUTH_TOKEN_SECRET=${AUTH_TOKEN_SECRET:?AUTH_TOKEN_SECRET must be set — see .env.example}
       - SPRING_DATA_MONGODB_URI=mongodb://mongo1:27017,mongo2:27018,mongo3:27019/workly?replicaSet=rs0
       - SPRING_DATA_REDIS_SENTINEL_MASTER=mymaster
       - SPRING_DATA_REDIS_SENTINEL_NODES=redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379
@@ -370,13 +374,56 @@ services:
       context: ..
       dockerfile: workly-Matching-Service/Dockerfile
     environment:
+      - AUTH_TOKEN_SECRET=${AUTH_TOKEN_SECRET:?AUTH_TOKEN_SECRET must be set — see .env.example}
       - SPRING_DATA_MONGODB_URI=mongodb://mongo1:27017,mongo2:27018,mongo3:27019/workly?replicaSet=rs0
+      - SPRING_DATA_REDIS_SENTINEL_MASTER=mymaster
+      - SPRING_DATA_REDIS_SENTINEL_NODES=redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
       - OTEL_SERVICE_NAME=workly-matching-service
     ports:
       - "8089:8089"
     depends_on:
       - mongo-init
+
+  workly-auth-service:
+    build:
+      context: ..
+      dockerfile: workly-Auth-Service/Dockerfile
+    environment:
+      - AUTH_TOKEN_SECRET=${AUTH_TOKEN_SECRET:?AUTH_TOKEN_SECRET must be set — see .env.example}
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo1:27017,mongo2:27018,mongo3:27019/workly?replicaSet=rs0
+      - SPRING_DATA_REDIS_SENTINEL_MASTER=mymaster
+      - SPRING_DATA_REDIS_SENTINEL_NODES=redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_SERVICE_NAME=workly-auth-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      - mongo-init
+      - redis-sentinel-1
+
+  workly-gateway:
+    build:
+      context: ..
+      dockerfile: workly-Gateway/Dockerfile
+    environment:
+      - AUTH_SERVICE_URL=http://workly-auth-service:8085
+      - NOTIFICATION_SERVICE_URL=http://workly-notification-service:8086
+      - TRACKING_SERVICE_URL=http://workly-tracking-service:8087
+      - PROFILE_SERVICE_URL=http://workly-profile-service:8088
+      - MATCHING_SERVICE_URL=http://workly-matching-service:8089
+      - SERVER_URL=http://workly-api:8080
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_SERVICE_NAME=workly-gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - workly-auth-service
+      - workly-notification-service
+      - workly-tracking-service
+      - workly-profile-service
+      - workly-matching-service
+      - workly-api
 
 volumes:
   mongo1_data:

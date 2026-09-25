@@ -10,6 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 public class MockOtpProvider implements OtpProvider {
     @Override
     public void sendOtp(String mobileNumber, String otp) {
-        log.info("Sending MOCK OTP [{}] to mobile number [{}]", otp, mobileNumber);
+        log.info("Sending MOCK OTP to mobile number [{}]", mobileNumber);
     }
 }

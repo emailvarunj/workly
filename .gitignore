@@ -9,6 +9,7 @@
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+.claude/
 
 workly-Search-Service/bin/*
 workly-Server/bin/*
@@ -24,6 +25,21 @@ workly-Chat-Service/bin/*
 # Gradle files
 .gradle/
 build/
+.agents/
+AGENTS.md
+_bmad-output/
+_bmad/
+skills-lock.json
+AUDIT_FINDINGS.md
+workly-Auth-Service/bin/
+workly-Auth-Service/Dockerfile
+workly-Common/bin/
+workly-Gateway/Dockerfile
+workly-Gateway/bin/
+workly-Matching-Service/bin/
+workly-Notification-Service/bin/
+workly-Profile-Service/bin/
+workly-Tracking-Service/bin/
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -79,6 +95,7 @@ logs/
 ############################################
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 *.crt

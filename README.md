@@ -103,7 +103,7 @@ docker rm seeker-temp
 ### 5. Unified Local Debugging (VS Code)
 **Prerequisites**: Docker Desktop, VS Code, Java Extension Pack.
 
-The project includes a **"One Click" Debug setup** that runs all services (`Server`, `Chat`, `Search`, `Config`) simultaneously and attaches the debugger to each.
+The project includes a **"One Click" Debug setup** that runs the original 4 services (`Server`, `Chat`, `Search`, `Config`) simultaneously and attaches the debugger to each. It predates the `feat(scale)` service-extraction and does **not** cover `auth-service`, `gateway`, `notification-service`, `tracking-service`, `profile-service`, or `matching-service` — start those manually per Option B above if you need them running too.
 
 1.  Open Project in **VS Code**.
 2.  Go to **Run and Debug** (`Ctrl+Shift+D`).
@@ -111,14 +111,14 @@ The project includes a **"One Click" Debug setup** that runs all services (`Serv
 4.  Press **F5**.
 
 **What happens?**
-*   **Infrastructure**: VS Code automatically starts Redis, Mongo, Postgres, Kafka, Elastic via `docker-compose-dev.yml`.
-*   **Services**: All 4 microservices start in parallel.
-*   **Debug**: Breakpoints work in any service instantly.
+*   **Infrastructure**: VS Code automatically starts Redis, Mongo, Postgres, Kafka, Elastic via `docker/docker-compose.yml` (the `Start Infrastructure` task in `.vscode/tasks.json`).
+*   **Services**: The 4 services above start in parallel.
+*   **Debug**: Breakpoints work in any of the 4 instantly.
 
 ### 6. Infrastructure Only
 If you prefer running services from command line but need databases:
 ```bash
-docker-compose -f docker-compose-dev.yml up -d
+docker-compose -f docker/docker-compose.yml up -d
 ```
 
 ## ⚙️ Third-Party Integrations & Configurations

@@ -20,10 +20,15 @@ public class JobVerificationService {
     private final JobCompletionRepository jpaJobRepository;
 
     @Transactional
-    public JobCompletion verifyAndCompleteJob(String jobId, String otp) {
+    public JobCompletion verifyAndCompleteJob(String jobId, String otp, String requestingUserMobile) {
         log.debug("JobVerificationService: [ENTER] verifyAndCompleteJob - jobId: {}", jobId);
         Job mongoJob = mongoJobRepository.findById(jobId)
                 .orElseThrow(() -> WorklyException.notFound("Job not found in MongoDB"));
+
+        if (mongoJob.getWorkerMobileNumber() == null || !mongoJob.getWorkerMobileNumber().equals(requestingUserMobile)) {
+            log.debug("JobVerificationService: [FAIL] {} is not the assigned worker for job {}", requestingUserMobile, jobId);
+            throw WorklyException.forbidden("You are not the assigned worker for this job");
+        }
 
         if (otp == null || mongoJob.getCompletionOtp() == null || !mongoJob.getCompletionOtp().equals(otp)) {
             log.debug("JobVerificationService: [FAIL] OTP mismatch for job {}", jobId);

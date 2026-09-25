@@ -94,6 +94,9 @@ public class CustomReportService {
 
     public Document getMongoSample(String collectionName) {
         log.debug("CustomReportService: [ENTER] getMongoSample - collection: {}", collectionName);
+        if (collectionName == null || !MONGO_COLLECTION_NAME.matcher(collectionName).matches()) {
+            throw new IllegalArgumentException("Invalid collection name.");
+        }
         Document doc = mongoTemplate.getCollection(collectionName).find().first();
         log.debug("CustomReportService: [EXIT] getMongoSample - found: {}", doc != null);
         return doc;

@@ -38,12 +38,13 @@ class JobVerificationServiceTest {
         Job mongoJob = new Job();
         mongoJob.setCompletionOtp(otp);
         mongoJob.setStatus(JobStatus.ASSIGNED);
+        mongoJob.setWorkerMobileNumber("w1");
 
         when(mongoJobRepository.findById(jobId)).thenReturn(Optional.of(mongoJob));
         when(jpaJobRepository.findByJobId(jobId)).thenReturn(Optional.empty());
         when(jpaJobRepository.save(any(JobCompletion.class))).thenReturn(new JobCompletion());
 
-        verificationService.verifyAndCompleteJob(jobId, otp);
+        verificationService.verifyAndCompleteJob(jobId, otp, "w1");
 
         assertEquals(JobStatus.COMPLETED, mongoJob.getStatus());
         verify(mongoJobRepository).save(mongoJob);
@@ -55,9 +56,22 @@ class JobVerificationServiceTest {
         String jobId = "job123";
         Job mongoJob = new Job();
         mongoJob.setCompletionOtp("1111");
+        mongoJob.setWorkerMobileNumber("w1");
 
         when(mongoJobRepository.findById(jobId)).thenReturn(Optional.of(mongoJob));
 
-        assertThrows(WorklyException.class, () -> verificationService.verifyAndCompleteJob(jobId, "2222"));
+        assertThrows(WorklyException.class, () -> verificationService.verifyAndCompleteJob(jobId, "2222", "w1"));
+    }
+
+    @Test
+    void verifyAndCompleteJob_ShouldThrowExceptionForNonAssignedWorker() {
+        String jobId = "job123";
+        Job mongoJob = new Job();
+        mongoJob.setCompletionOtp("1234");
+        mongoJob.setWorkerMobileNumber("w1");
+
+        when(mongoJobRepository.findById(jobId)).thenReturn(Optional.of(mongoJob));
+
+        assertThrows(WorklyException.class, () -> verificationService.verifyAndCompleteJob(jobId, "1234", "someone-else"));
     }
 }

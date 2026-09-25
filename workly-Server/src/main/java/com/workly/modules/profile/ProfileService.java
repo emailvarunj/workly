@@ -3,6 +3,7 @@ package com.workly.modules.profile;
 import lombok.RequiredArgsConstructor;
 import com.workly.core.RegionHelper;
 import com.workly.modules.notification.NotificationService;
+import com.workly.modules.notification.service.UserTokenService;
 import com.workly.modules.search.SearchServiceClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -22,6 +23,7 @@ public class ProfileService {
     private final WorkerProfileRepository workerRepository;
     private final SkillSeekerProfileRepository seekerRepository;
     private final SearchServiceClient searchServiceClient;
+    private final UserTokenService userTokenService;
 
     @Autowired
     private NotificationService notificationService;
@@ -97,6 +99,8 @@ public class ProfileService {
 
     public void updateDeviceToken(String mobileNumber, String token) {
         log.debug("ProfileService: [ENTER] updateDeviceToken - Synchronizing Firebase maps.");
+        userTokenService.saveToken(mobileNumber, token);
+
         // Try to find worker first
         Optional<WorkerProfile> worker = getWorkerProfile(mobileNumber);
         if (worker.isPresent()) {
